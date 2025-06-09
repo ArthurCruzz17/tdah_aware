@@ -1,0 +1,13 @@
+.venv/
+env/
+venv/
+__pycache__/
+*.pyc
+features.csv
+patient_info.csv
+CPT_II_ConnersContinuousPerformanceTest.csv
+activity_data/
+hrv_data/
+*.log
+.vscode/
+*.tmp
