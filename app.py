@@ -66,7 +66,6 @@ with st.form("patient_data_form"):
 
     st.subheader("3. Dados Objetivos de Desempenho e Atividade")
     st.markdown("*(Insira as pontuações do paciente obtidas em testes objetivos como o CPT-II e dados de sensores, se disponíveis)*")
-
     st.write("**CPT-II (Conners' Continuous Performance Test II):** Métricas objetivas de atenção e impulsividade do paciente.")
     raw_score_omissions = st.slider("CPT-II: Taxa de Omissões", min_value=0, max_value=20, value=5, help="Número de vezes que o paciente falhou em responder a um estímulo alvo.")
     raw_score_commissions = st.slider("CPT-II: Taxa de Comissões", min_value=0, max_value=20, value=5, help="Número de vezes que o paciente respondeu a um estímulo não-alvo.")
@@ -80,8 +79,7 @@ with st.form("patient_data_form"):
     acc_maximum = st.number_input("ACC__maximum (Pico de Aceleração)", value=2500.0, format="%.4f", help="Valor máximo de aceleração registrado.")
 
     submit_button = st.form_submit_button("Analisar Indícios no Paciente")
-    
-if submit_button:
+
     user_input = pd.DataFrame([[
         acc_mean, acc_variance, acc_maximum, age, sex_encoded,
         wurs, asrs, madrs, hads_a, hads_d, mdq_pos_encoded,
@@ -94,10 +92,18 @@ if submit_button:
         'Raw Score VarSE', 'Raw Score DPrime'
     ])
 
-    user_input_scaled = scaler.transform(user_input)
-    prediction = model.predict(user_input_scaled)[0]
-    prediction_proba = model.predict_proba(user_input_scaled)[0]
+    user_input_scaled = scaler.transform(user_input) 
 
+    if submit_button:
+        prediction = model.predict(user_input_scaled)[0]
+        prediction_proba = model.predict_proba(user_input_scaled)[0]
+    else:
+        
+        prediction = None  
+        prediction_proba = [0.5, 0.5] 
+
+
+if submit_button:
     st.subheader("📊 Resultado da Análise Computacional do Paciente")
 
     if prediction == 1:
