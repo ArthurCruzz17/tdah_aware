@@ -66,6 +66,7 @@ with st.form("patient_data_form"):
 
     st.subheader("3. Dados Objetivos de Desempenho e Atividade")
     st.markdown("*(Insira as pontuações do paciente obtidas em testes objetivos como o CPT-II e dados de sensores, se disponíveis)*")
+
     st.write("**CPT-II (Conners' Continuous Performance Test II):** Métricas objetivas de atenção e impulsividade do paciente.")
     raw_score_omissions = st.slider("CPT-II: Taxa de Omissões", min_value=0, max_value=20, value=5, help="Número de vezes que o paciente falhou em responder a um estímulo alvo.")
     raw_score_commissions = st.slider("CPT-II: Taxa de Comissões", min_value=0, max_value=20, value=5, help="Número de vezes que o paciente respondeu a um estímulo não-alvo.")
@@ -80,63 +81,57 @@ with st.form("patient_data_form"):
 
     submit_button = st.form_submit_button("Analisar Indícios no Paciente")
 
-    user_input = pd.DataFrame([[
-        acc_mean, acc_variance, acc_maximum, age, sex_encoded,
-        wurs, asrs, madrs, hads_a, hads_d, mdq_pos_encoded,
-        raw_score_omissions, raw_score_commissions, raw_score_hitrt,
-        raw_score_varse, raw_score_dprime
-    ]], columns=[
-        'ACC__mean', 'ACC__variance', 'ACC__maximum', 'AGE', 'SEX',
-        'WURS', 'ASRS', 'MADRS', 'HADS_A', 'HADS_D', 'MDQ_POS',
-        'Raw Score Omissions', 'Raw Score Commissions', 'Raw Score HitRT',
-        'Raw Score VarSE', 'Raw Score DPrime'
-    ])
-
-    user_input_scaled = scaler.transform(user_input) 
-
+    
     if submit_button:
+        user_input = pd.DataFrame([[
+            acc_mean, acc_variance, acc_maximum, age, sex_encoded,
+            wurs, asrs, madrs, hads_a, hads_d, mdq_pos_encoded,
+            raw_score_omissions, raw_score_commissions, raw_score_hitrt,
+            raw_score_varse, raw_score_dprime
+        ]], columns=[
+            'ACC__mean', 'ACC__variance', 'ACC__maximum', 'AGE', 'SEX',
+            'WURS', 'ASRS', 'MADRS', 'HADS_A', 'HADS_D', 'MDQ_POS',
+            'Raw Score Omissions', 'Raw Score Commissions', 'Raw Score HitRT',
+            'Raw Score VarSE', 'Raw Score DPrime'
+        ])
+
+        user_input_scaled = scaler.transform(user_input)
         prediction = model.predict(user_input_scaled)[0]
         prediction_proba = model.predict_proba(user_input_scaled)[0]
-    else:
-        
-        prediction = None  
-        prediction_proba = [0.5, 0.5] 
 
+        st.subheader("📊 Resultado da Análise Computacional do Paciente")
 
-if submit_button:
-    st.subheader("📊 Resultado da Análise Computacional do Paciente")
+        if prediction == 1:
+            st.error("❗ **INDÍCIOS SIGNIFICATIVOS DE TDAH DETECTADOS** ❗")
+            st.write(f"A probabilidade de o paciente apresentar TDAH é de **{prediction_proba[1] * 100:.2f}%**.")
+            st.markdown("""
+            **Observações para o Profissional:**
+            Com base nos dados inseridos, a ferramenta identificou um padrão de características que **sugerem fortemente a presença de TDAH** no paciente.
+            """)
+            st.markdown("""
+            **Pontos de Destaque:**
+            - **Questionários Clínicos (WURS, ASRS):** As pontuações elevadas nesses questionários são indicadores chaves, alinhando-se a relatos de sintomas persistentes de desatenção e hiperatividade/impulsividade.
+            - **CPT-II (Omissões, Comissões, Variabilidade):** Métricas objetivas de desempenho de atenção e controle inibitório são cruciais. Padrões específicos de erros ou variabilidade no tempo de reação corroboram os indícios.
+            - **Dados de Acelerômetro:** Podem fornecer insights adicionais sobre o comportamento motor e a agitação.
 
-    if prediction == 1:
-        st.error("❗ **INDÍCIOS SIGNIFICATIVOS DE TDAH DETECTADOS** ❗")
-        st.write(f"A probabilidade de o paciente apresentar TDAH é de **{prediction_proba[1] * 100:.2f}%**.")
-        st.markdown("""
-        **Observações para o Profissional:**
-        Com base nos dados inseridos, a ferramenta identificou um padrão de características que **sugerem fortemente a presença de TDAH** no paciente.
-        """)
-        st.markdown("""
-        **Pontos de Destaque:**
-        - **Questionários Clínicos (WURS, ASRS):** As pontuações elevadas nesses questionários são indicadores chaves, alinhando-se a relatos de sintomas persistentes de desatenção e hiperatividade/impulsividade.
-        - **CPT-II (Omissões, Comissões, Variabilidade):** Métricas objetivas de desempenho de atenção e controle inibitório são cruciais. Padrões específicos de erros ou variabilidade no tempo de reação corroboram os indícios.
-        - **Dados de Acelerômetro:** Podem fornecer insights adicionais sobre o comportamento motor e a agitação.
-
-        **Sugestões para o Profissional:**
-        * **Aprofundar a Anamnese:** Explorar detalhadamente o histórico de desenvolvimento, escolar e familiar, e o impacto dos sintomas nas diversas esferas da vida do paciente.
-        * **Avaliações Complementares:** Considerar o uso de outras escalas validadas ou encaminhamento para neuropsicólogo para uma bateria de testes mais extensa, se ainda não realizado.
-        * **Plano Terapêutico:** Este resultado pode apoiar a formulação de um plano de tratamento (farmacológico e/ou não farmacológico) e estratégias de manejo personalizadas.
-        """)
-    else:
-        st.success("✅ **NENHUM INDÍCIO SIGNIFICATIVO DE TDAH DETECTADO POR ESTA ANÁLISE** ✅")
-        st.write(f"A probabilidade de o paciente **não** apresentar TDAH é de **{prediction_proba[0] * 100:.2f}%**.")
-        st.markdown("""
-        **Observações para o Profissional:**
-        De acordo com a análise computacional, os dados inseridos **não sugerem a presença de TDAH** por esta ferramenta.
-        """)
-        st.markdown("""
-        **Sugestões para o Profissional:**
-        * **Investigação Diferencial:** Se os sintomas do paciente persistirem, é fundamental continuar a investigação para outras possíveis causas (ex: ansiedade, depressão, outros transtornos de neurodesenvolvimento, condições médicas).
-        * **Revisão Contextual:** Reavaliar o contexto de vida do paciente, fatores estressores ou outras condições que possam estar contribuindo para os sintomas.
-        * **Monitoramento:** Manter o monitoramento dos sintomas e considerar reavaliações periódicas, se clinicamente indicado.
-        """)
+            **Sugestões para o Profissional:**
+            * **Aprofundar a Anamnese:** Explorar detalhadamente o histórico de desenvolvimento, escolar e familiar, e o impacto dos sintomas nas diversas esferas da vida do paciente.
+            * **Avaliações Complementares:** Considerar o uso de outras escalas validadas ou encaminhamento para neuropsicólogo para uma bateria de testes mais extensa, se ainda não realizado.
+            * **Plano Terapêutico:** Este resultado pode apoiar a formulação de um plano de tratamento (farmacológico e/ou não farmacológico) e estratégias de manejo personalizadas.
+            """)
+        else:
+            st.success("✅ **NENHUM INDÍCIO SIGNIFICATIVO DE TDAH DETECTADO POR ESTA ANÁLISE** ✅")
+            st.write(f"A probabilidade de o paciente **não** apresentar TDAH é de **{prediction_proba[0] * 100:.2f}%**.")
+            st.markdown("""
+            **Observações para o Profissional:**
+            De acordo com a análise computacional, os dados inseridos **não sugerem a presença de TDAH** por esta ferramenta.
+            """)
+            st.markdown("""
+            **Sugestões para o Profissional:**
+            * **Investigação Diferencial:** Se os sintomas do paciente persistirem, é fundamental continuar a investigação para outras possíveis causas (ex: ansiedade, depressão, outros transtornos de neurodesenvolvimento, condições médicas).
+            * **Revisão Contextual:** Reavaliar o contexto de vida do paciente, fatores estressores ou outras condições que possam estar contribuindo para os sintomas.
+            * **Monitoramento:** Manter o monitoramento dos sintomas e considerar reavaliações periódicas, se clinicamente indicado.
+            """)
 
 st.markdown("---")
 st.warning("Lembre-se: Esta análise é um **auxílio** para o profissional. O **diagnóstico final e o plano de tratamento** são de responsabilidade exclusiva do médico ou profissional de saúde qualificado.")
